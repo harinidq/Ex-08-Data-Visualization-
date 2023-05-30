@@ -22,122 +22,163 @@ NAME:M.D.HARINI
 
 REGISTER NUMBER:212222230043
 ```
-# DATA
+#Import required libraries
+
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
+
 import seaborn as sns
-import seaborn as sbn
-df=pd.read_csv("/content/Superstore.csv",encoding='windows-1252')
-df.head()
 
-# DATA CLEANING
-df.info()
+import matplotlib.pyplot as plt
 
-df.isnull().sum()
+#Load the dataset
 
-1.Which Segment has Highest sales?
-sbn.barplot(x=df['Segment'],y=df['Sales'])
-plt.title("Highest Sales of the segment")
+df = pd.read_csv('Superstore2.csv', encoding='unicode_escape')
 
-2.Which City has Highest profit?
-sbn.barplot(x=df['City'],y=df['Profit'])
-plt.title("Highest Profit of cities")
+#Data Cleaning: Drop unnecessary columns
 
-City=df.loc[:,["City","Profit"]]
-df.head(5)
-City=City.groupby(by=["City"]).sum().sort_values(by="Profit")
-plt.figure(figsize=(10,10))
-sbn.barplot(x=City.index,y="Profit",data=City)
-plt.xticks(rotation = 90)
-plt.xlabel=("City")
-plt.ylabel=("Profit")
+df.drop(['Row ID', 'Order ID', 'Ship Date', 'Customer ID', 'Postal Code', 'Product ID'], axis=1, inplace=True)
+
+#Feature Generation: Extract Year and Month from Order Date
+
+df['Year'] = pd.DatetimeIndex(df['Order Date']).year
+
+df['Month'] = pd.DatetimeIndex(df['Order Date']).month_name()
+
+#1. Which Segment has Highest sales?
+
+segment_sales = df.groupby('Segment')['Sales'].sum().reset_index()
+
+plt.figure(figsize=(8,5))
+
+sns.barplot(x='Segment', y='Sales', data=segment_sales)
+
+plt.title('Segment-wise Sales')
+
 plt.show()
 
-3.Which ship mode is profitable?
-sbn.barplot(x=df['Ship Mode'],y=df['Profit'])
-plt.title("Profitable Ship Mode")
+#2. Which City has Highest profit?
 
-4.Sales of the product based on region.
-sbn.barplot(x=df['Sales'], y=df['Region'])
-plt.title("Sales of Product based on Region")
+city_profit = df.groupby('City')['Profit'].sum().reset_index().sort_values(by='Profit', ascending=False)
 
-5.Find the relation between sales and profit.
-sbn.lineplot(x=df['Sales'], y=df['Profit'])
-plt.title("Relation between Sales and Profit")
+plt.figure(figsize=(12,8))
 
-6.Find the relation between sales and profit based on the following category. i) Segment ii)City iii)States iv)Segment and Ship Mode v)Segment, Ship mode and Region
+sns.barplot(x='City', y='Profit', data=city_profit.head(10))
 
-i) Segment
-grouped_data = df.groupby('Segment')[['Sales', 'Profit']].mean()
-# Create a bar chart of the grouped data
-fig, ax = plt.subplots()
-ax.bar(grouped_data.index, grouped_data['Sales'], label='Sales')
-ax.bar(grouped_data.index, grouped_data['Profit'], bottom=grouped_data['Sales'], label='Profit')
-ax.set_xlabel('Segment')
-ax.set_ylabel('Value')
-ax.legend()
+plt.title('Top 10 Cities by Profit')
+
 plt.show()
 
-ii) City
-grouped_data = df.groupby('City')[['Sales', 'Profit']].mean()
-# Create a bar chart of the grouped data
-fig, ax = plt.subplots()
-ax.bar(grouped_data.index, grouped_data['Sales'], label='Sales')
-ax.bar(grouped_data.index, grouped_data['Profit'], bottom=grouped_data['Sales'], label='Profit')
-ax.set_xlabel('City')
-ax.set_ylabel('Value')
-ax.legend()
+#3. Which ship mode is profitable?
+
+shipmode_profit = df.groupby('Ship Mode')['Profit'].sum().reset_index()
+
+plt.figure(figsize=(8,5))
+
+sns.barplot(x='Ship Mode', y='Profit', data=shipmode_profit)
+
+plt.title('Ship Mode-wise Profit')
+
 plt.show()
 
-iii) States
-grouped_data = df.groupby('State')[['Sales', 'Profit']].mean()
-# Create a bar chart of the grouped data
-fig, ax = plt.subplots()
-ax.bar(grouped_data.index, grouped_data['Sales'], label='Sales')
-ax.bar(grouped_data.index, grouped_data['Profit'], bottom=grouped_data['Sales'], label='Profit')
-ax.set_xlabel('State')
-ax.set_ylabel('Value')
-ax.legend()
+#4. Sales of the product based on region
+
+region_sales = df.groupby('Region')['Sales'].sum().reset_index()
+
+plt.figure(figsize=(8,5))
+
+sns.barplot(x='Region', y='Sales', data=region_sales)
+
+plt.title('Region-wise Sales')
+
 plt.show()
 
-iv)Segment and Ship Mode
-grouped_data = df.groupby(['Segment', 'Ship Mode'])[['Sales', 'Profit']].mean()
-pivot_data = grouped_data.reset_index().pivot(index='Segment', columns='Ship Mode', values=['Sales', 'Profit'])
-# Create a bar chart of the grouped data
-fig, ax = plt.subplots()
-pivot_data.plot(kind='bar', ax=ax)
-ax.set_xlabel('Segment')
-ax.set_ylabel('Value')
-plt.legend(title='Ship Mode')
+#5. Find the relation between sales and profit
+
+plt.figure(figsize=(8,5))
+
+sns.scatterplot(x='Sales', y='Profit', data=df)
+
+plt.title('Sales vs. Profit')
+
 plt.show()
 
-v)Segment, Ship mode and Region
-grouped_data = df.groupby(['Segment', 'Ship Mode','Region'])[['Sales', 'Profit']].mean()
-pivot_data = grouped_data.reset_index().pivot(index=['Segment', 'Ship Mode'], columns='Region', values=['Sales', 'Profit'])
-sns.set_style("whitegrid")
-sns.set_palette("Set1")
-pivot_data.plot(kind='bar', stacked=True, figsize=(10, 5))
-plt.legend(title='Region')
+#6. Find the relation between sales and profit based on the following category.
+
+#i) Segment
+
+segment_sales_profit = df.groupby('Segment')['Sales', 'Profit'].mean().reset_index()
+
+plt.figure(figsize=(8,5))
+
+sns.barplot(x='Segment', y='Sales', data=segment_sales_profit, color='blue', alpha=0.5, label='Sales')
+
+sns.barplot(x='Segment', y='Profit', data=segment_sales_profit, color='green', alpha=0.5, label='Profit')
+
+plt.title('Segment-wise Sales and Profit')
+
+plt.legend()
+
+plt.show()
+
+#ii) City
+
+city_sales_profit = df.groupby('City')['Sales', 'Profit'].mean().reset_index().sort_values(by='Profit', ascending=False).head(10)
+
+plt.figure(figsize=(12,8))
+
+sns.barplot(x='City', y='Sales', data=city_sales_profit, color='blue', alpha=0.5, label='Sales')
+
+sns.barplot(x='City', y='Profit', data=city_sales_profit, color='green', alpha=0.5, label='Profit')
+
+plt.title('Top 10 Cities by Sales and Profit')
+
+plt.legend()
+
+plt.show()
+
+#iii) States
+
+plt.figure(figsize=(8,5))
+
+sns.scatterplot(x='Sales', y='Profit', hue='State', data=df)
+
+plt.title('Sales vs. Profit based on State')
+
+plt.show()
+
+#iv) Segment and Ship Mode
+
+plt.figure(figsize=(8,5))
+
+sns.scatterplot(x='Sales', y='Profit', hue='Segment', style='Ship Mode', data=df)
+
+plt.title('Sales vs. Profit based on Segment and Ship Mode')
+
+plt.show()
+
+#v) Segment, Ship mode and Region
+
+plt.figure(figsize=(8,5))
+
+sns.scatterplot(x='Sales', y='Profit', hue='Segment', style='Ship Mode', size='Region', data=df)
+
+plt.title('Sales vs. Profit based on Segment, Ship Mode and Region')
+
 plt.show()
 ```
 
 # OUPUT
-![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/63df2bc9-0c25-4959-b936-d8e2e5b565f0)
-![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/f7adf004-063a-473d-b9ef-372b955ba323)
-![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/7b68a26c-269d-4895-bbb1-e251e9087682)
-![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/73c7bb4c-b129-4a7c-a071-fa0b790d9e09)
-![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/67364e77-efab-4c1c-8a28-acc1f759c9e0)
-![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/15e74830-0200-4dd3-b9f2-95b09c18e237)
-![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/080b49fd-01e1-4285-805b-92e721261ad3)
-![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/a32ec6da-edf0-425b-9c22-0368bda68871)
-![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/8058c566-7766-42ad-bbd2-1c793f945f1a)
-![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/911c6400-de87-402b-9114-71c99507570e)
-![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/dbf3daae-e455-456e-9fcb-88672b263042)
-![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/651c7da6-5387-4058-8dbf-2a2b41647678)
-![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/83bc7894-5a60-4c1e-989d-7af6222f7052)
-![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/2661ca70-5e58-491c-bd7e-9a1f94c9886e)
-![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/34c38542-b917-4489-a1eb-92fa19d0f11e)
+![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/3fd50ba0-7640-4f6e-82e5-60d0f67b4a7f)
+![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/d9adc176-4ecd-4077-970b-dcc1ed70f0fa)
+![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/423b351b-dca9-4cfd-bbe9-27dfaab2842e)
+![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/fb88de13-8ebf-447f-a0dd-b990f682dd54)
+![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/f026c081-3979-4e6d-98dd-8639e916221e)
+![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/465e9f62-422c-4e46-ba6a-f2a31417d7be)
+![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/216dea09-4170-4272-a0b3-ec307798788d)
+![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/32c9646f-1b00-436b-9b6d-cefce11458fb)
+![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/62c526d4-27d9-4af4-af9f-e2afce1a6a88)
+![image](https://github.com/harinidq/Ex-08-Data-Visualization-/assets/113497680/ced98db3-bb81-410b-8007-ea44955eba2e)
+
 
 # RESULT:
 Hence the data visualization method for the given dataset applied successfully.
